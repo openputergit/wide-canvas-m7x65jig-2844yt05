@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AquaPure Hub - Water Delivery Service</title>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<style>
+    body {
+        font-family: 'Poppins', sans-serif;
+        background: linear-gradient(135deg, #f0f9ff 0%, #ffffff 100%);
+    }
+    .water-drop {
+        animation: bobbing 2s ease-in-out infinite;
+    }
+    @keyframes bobbing {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-10px); }
+    }
+    .glass-effect {
+        background: rgba(255, 255, 255, 0.25);
+        backdrop-filter: blur(4px);
+        border: 1px solid rgba(255, 255, 255, 0.18);
+    }
+</style>
+<body class="min-h-screen">
+    <!-- Navbar -->
+    <nav class="bg-blue-600 text-white p-4">
+        <div class="container mx-auto flex justify-between items-center">
+            <div class="flex items-center space-x-2">
+                <i class="bi bi-droplet-fill text-2xl"></i>
+                <span class="text-xl font-bold">AquaPure Hub</span>
+            </div>
+            <div class="hidden md:flex space-x-4">
+                <button onclick="showSection('home')" class="hover:text-blue-200">Home</button>
+                <button onclick="showSection('order')" class="hover:text-blue-200">Order</button>
+                <button onclick="showSection('tracking')" class="hover:text-blue-200">Track Order</button>
+                <button onclick="showSection('subscription')" class="hover:text-blue-200">Subscriptions</button>
+            </div>
+            <div id="authButtons">
+                <button onclick="toggleAuth('login')" class="bg-white text-blue-600 px-4 py-2 rounded-lg">Login</button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container mx-auto px-4 py-8">
+        <!-- Auth Modal -->
+        <div id="authModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+            <div class="bg-white p-8 rounded-lg w-96">
+                <h2 id="authTitle" class="text-2xl font-bold mb-4">Login</h2>
+                <form id="authForm" class="space-y-4">
+                    <input type="email" placeholder="Email" class="w-full p-2 border rounded" required>
+                    <input type="password" placeholder="Password" class="w-full p-2 border rounded" required>
+                    <button type="submit" class="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700">Submit</button>
+                </form>
+                <button onclick="toggleAuth('close')" class="mt-4 text-gray-600">Close</button>
+            </div>
+        </div>
+
+        <!-- Home Section -->
+        <section id="home" class="space-y-8">
+            <div class="text-center">
+                <h1 class="text-4xl font-bold text-blue-600 mb-4">Pure Water Delivered to Your Doorstep</h1>
+                <p class="text-gray-600">Experience premium quality water delivery service with AquaPure Hub</p>
+            </div>
+
+            <!-- Product Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div class="glass-effect rounded-lg p-6 text-center">
+                    <i class="bi bi-droplet water-drop text-4xl text-blue-500"></i>
+                    <h3 class="text-xl font-bold mt-4">1L Bottle</h3>
+                    <p class="text-gray-600 mt-2">₹20/bottle</p>
+                    <button onclick="addToCart('1L')" class="mt-4 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Add to Cart</button>
+                </div>
+                <!-- Repeat for other bottle sizes -->
+            </div>
+        </section>
+
+        <!-- Order Section -->
+        <section id="order" class="hidden">
+            <div class="glass-effect p-6 rounded-lg">
+                <h2 class="text-2xl font-bold mb-4">Your Cart</h2>
+                <div id="cartItems" class="space-y-4"></div>
+                <div class="mt-4 flex justify-between items-center">
+                    <div class="text-xl font-bold">Total: <span id="cartTotal">₹0</span></div>
+                    <button onclick="checkout()" class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700">Checkout</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Tracking Section -->
+        <section id="tracking" class="hidden">
+            <div class="glass-effect p-6 rounded-lg">
+                <h2 class="text-2xl font-bold mb-4">Track Your Order</h2>
+                <input type="text" placeholder="Enter Order ID" class="w-full p-2 border rounded mb-4">
+                <button class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700">Track</button>
+            </div>
+        </section>
+
+        <!-- Subscription Section -->
+        <section id="subscription" class="hidden">
+            <div class="glass-effect p-6 rounded-lg">
+                <h2 class="text-2xl font-bold mb-4">Subscription Plans</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="border p-6 rounded-lg">
+                        <h3 class="text-xl font-bold">Weekly Plan</h3>
+                        <p class="text-gray-600 mt-2">Get weekly deliveries at 10% off</p>
+                        <button class="mt-4 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Subscribe</button>
+                    </div>
+                    <div class="border p-6 rounded-lg">
+                        <h3 class="text-xl font-bold">Monthly Plan</h3>
+                        <p class="text-gray-600 mt-2">Get monthly deliveries at 20% off</p>
+                        <button class="mt-4 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Subscribe</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <script>
+        // Firebase Configuration
+        const firebaseConfig = {
+            // Your Firebase config here
+        };
+        firebase.initializeApp(firebaseConfig);
+
+        let cart = [];
+        const prices = {
+            '1L': 20,
+            '2L': 35,
+            '5L': 75,
+            '20L': 250
+        };
+
+        function showSection(sectionId) {
+            document.querySelectorAll('section').forEach(section => section.classList.add('hidden'));
+            document.getElementById(sectionId).classList.remove('hidden');
+        }
+
+        function toggleAuth(action) {
+            const modal = document.getElementById('authModal');
+            if (action === 'close') {
+                modal.classList.add('hidden');
+            } else {
+                modal.classList.remove('hidden');
+                document.getElementById('authTitle').textContent = action === 'login' ? 'Login' : 'Sign Up';
+            }
+        }
+
+        function addToCart(size) {
+            cart.push(size);
+            updateCart();
+        }
+
+        function updateCart() {
+            const cartItems = document.getElementById('cartItems');
+            const cartTotal = document.getElementById('cartTotal');
+            
+            cartItems.innerHTML = '';
+            let total = 0;
+
+            const quantities = cart.reduce((acc, size) => {
+                acc[size] = (acc[size] || 0) + 1;
+                return acc;
+            }, {});
+
+            for (const [size, quantity] of Object.entries(quantities)) {
+                const itemTotal = prices[size] * quantity;
+                total += itemTotal;
+
+                cartItems.innerHTML += `
+                    <div class="flex justify-between items-center">
+                        <span>${quantity}x ${size} Bottle</span>
+                        <span>₹${itemTotal}</span>
+                    </div>
+                `;
+            }
+
+            cartTotal.textContent = `₹${total}`;
+        }
+
+        function checkout() {
+            if (cart.length === 0) {
+                alert('Please add items to your cart first!');
+                return;
+            }
+            // Implement checkout logic
+            alert('Checkout functionality will be implemented with payment gateway integration');
+        }
+
+        // Show home section by default
+        showSection('home');
+    </script>
+<script>document.body.addEventListener('wheel', e => { if (!e.ctrlKey) return; e.preventDefault(); return }, { passive: false })</script>
+	</body>
+</html>
